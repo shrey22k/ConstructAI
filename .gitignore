@@ -1,0 +1,24 @@
+# Virtual Environment
+venv/
+
+# Environment Variables (API Keys)
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ChromaDB local data
+data/chromadb/
+
+# Generated reports (optional - remove these 2 lines if you want to keep exports)
+data/exports/
+
+# VS Code settings
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db

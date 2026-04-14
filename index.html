@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ConstructAI — Report Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0e0e;
+    --surface: #161616;
+    --surface2: #1f1f1f;
+    --border: #2a2a2a;
+    --accent: #e86c2f;
+    --accent2: #f0a05a;
+    --text: #f0ede8;
+    --muted: #6b6560;
+    --success: #4caf7d;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 48px 48px;
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px;
+    right: -100px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(232,108,47,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* Header */
+  header {
+    padding: 48px 0 24px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 52px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .logo { display: flex; flex-direction: column; gap: 2px; }
+
+  .logo-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  .logo-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .logo-name span { color: var(--accent); }
+
+  .badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 2px;
+  }
+
+  /* Hero */
+  .hero {
+    margin-bottom: 44px;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .hero h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(40px, 7vw, 72px);
+    letter-spacing: 0.03em;
+    line-height: 1;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+
+  .hero h1 em { font-style: normal; color: var(--accent); }
+
+  .hero p {
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 300;
+    max-width: 480px;
+    line-height: 1.7;
+  }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 36px;
+    margin-bottom: 32px;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .card-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Report type grid */
+  .report-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .report-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 14px 12px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .report-btn::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--accent);
+    transform: scaleY(0);
+    transition: transform 0.18s ease;
+  }
+
+  .report-btn:hover { border-color: var(--accent); background: #1a1a1a; }
+  .report-btn:hover::before { transform: scaleY(1); }
+  .report-btn.active { border-color: var(--accent); background: rgba(232,108,47,0.08); }
+  .report-btn.active::before { transform: scaleY(1); }
+
+  .report-btn .icon { font-size: 18px; margin-bottom: 8px; display: block; }
+  .report-btn .label { font-size: 11px; font-weight: 600; color: var(--text); display: block; line-height: 1.3; }
+  .report-btn .sub { font-size: 9px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 3px; display: block; }
+
+  /* Fields */
+  .fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .field { display: flex; flex-direction: column; gap: 7px; }
+  .field.full { grid-column: 1 / -1; }
+
+  label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  input, textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 0.18s;
+    resize: none;
+  }
+
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+  input:focus, textarea:focus { border-color: var(--accent); }
+
+  /* Generate button */
+  .generate-btn {
+    width: 100%;
+    background: var(--accent);
+    border: none;
+    border-radius: 3px;
+    color: #fff;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.1em;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+
+  .generate-btn:hover { background: var(--accent2); transform: translateY(-1px); }
+  .generate-btn:active { transform: translateY(0); }
+  .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Output */
+  .output-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    display: none;
+    margin-bottom: 32px;
+  }
+
+  .output-card.visible { display: block; animation: fadeUp 0.5s ease both; }
+
+  .output-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .output-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .output-actions { display: flex; gap: 10px; }
+
+  .action-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .output-body {
+    padding: 28px;
+    font-size: 13px;
+    line-height: 1.85;
+    color: #ccc9c3;
+    font-family: 'DM Sans', sans-serif;
+    max-height: 520px;
+    overflow-y: auto;
+}
+
+.output-body h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    margin: 0 0 12px 0;
+}
+
+.output-body h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    border-left: 2px solid var(--accent);
+    padding-left: 10px;
+    margin: 20px 0 8px 0;
+}
+
+.output-body strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.output-body ul {
+    padding-left: 20px;
+    margin: 6px 0;
+}
+
+.output-body li {
+    margin-bottom: 4px;
+    color: #ccc9c3;
+}
+
+.output-body::-webkit-scrollbar { width: 4px; }
+.output-body::-webkit-scrollbar-track { background: var(--surface); }
+.output-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* Loading bar */
+  .loading-bar { height: 2px; background: var(--border); position: relative; overflow: hidden; display: none; }
+  .loading-bar.active { display: block; }
+  .loading-bar::after {
+    content: '';
+    position: absolute;
+    left: -40%; top: 0; bottom: 0;
+    width: 40%;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: slide 1.2s infinite ease-in-out;
+  }
+
+  /* Status row */
+  .status-row {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .status-row.visible { display: flex; }
+
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 1s infinite; }
+  .status-dot.done { background: var(--success); animation: none; }
+
+  .status-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* Footer */
+  footer {
+    margin-top: 20px;
+    padding: 24px 0 40px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+
+  footer p {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* Animations */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slide {
+    0%   { left: -40%; }
+    100% { left: 100%; }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 12px 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 100;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  @media (max-width: 600px) {
+    .report-grid { grid-template-columns: repeat(2, 1fr); }
+    .fields { grid-template-columns: 1fr; }
+    .field.full { grid-column: 1; }
+    header { flex-direction: column; align-items: flex-start; gap: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <!--<span class="logo-eyebrow">Powered by Groq + LLaMA</span>--> 
+      <span class="logo-name">Construction Content<span> Generator</span></span>
+    </div>
+    <span class="badge">Report Generator v1.0</span>
+  </header>
+
+  <!-- Hero -->
+  <div class="hero">
+    <h1>Professional<br/><em>Construction</em><br/>Reports. Instantly.</h1>
+    <p>Transform basic construction topics into industry-standard documentation using advanced AI prompt engineering.</p>
+  </div>
+
+  <!-- Form Card -->
+  <div class="card">
+    <div class="card-title">Select Report Type</div>
+
+    <div class="report-grid">
+      <button type="button" class="report-btn active" data-type="site_report">
+        <span class="icon">🏗️</span>
+        <span class="label">Site Report</span>
+        <span class="sub">General overview</span>
+      </button>
+      <button type="button" class="report-btn" data-type="safety_report">
+        <span class="icon">🦺</span>
+        <span class="label">Safety Report</span>
+        <span class="sub">Hazards & PPE</span>
+      </button>
+      <button type="button" class="report-btn" data-type="progress_report">
+        <span class="icon">📊</span>
+        <span class="label">Progress Report</span>
+        <span class="sub">Milestones & delays</span>
+      </button>
+      <button type="button" class="report-btn" data-type="inspection_report">
+        <span class="icon">🔍</span>
+        <span class="label">Inspection Report</span>
+        <span class="sub">Quality checks</span>
+      </button>
+      <button type="button" class="report-btn" data-type="daily_report">
+        <span class="icon">📋</span>
+        <span class="label">Daily Report</span>
+        <span class="sub">Day's activities</span>
+      </button>
+      <button type="button" class="report-btn" data-type="material_report">
+        <span class="icon">📦</span>
+        <span class="label">Material Report</span>
+        <span class="sub">Stock & usage</span>
+      </button>
+    </div>
+
+    <div class="fields">
+      <div class="field full">
+        <label>Construction Topic</label>
+        <textarea id="topic" rows="2" placeholder="e.g. concrete pouring on Level 3, fire extinguisher installation..."></textarea>
+      </div>
+      <div class="field">
+        <label>Site Location</label>
+        <input type="text" id="location" placeholder="e.g. Medicaps University Indore Site A" />
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="date" />
+      </div>
+    </div>
+
+    <button type="button" class="generate-btn" id="generateBtn" onclick="generate(event)">
+      Generate Report
+    </button>
+  </div>
+
+  <!-- Output -->
+  <div class="output-card" id="outputCard">
+    <div class="loading-bar" id="loadingBar"></div>
+    <div class="output-header">
+      <span class="output-tag" id="outputTag">— Report Output</span>
+      <div class="output-actions">
+        <button type="button" class="action-btn" onclick="copyReport()">Copy</button>
+        <button type="button" class="action-btn" onclick="downloadReport()">Download PDF</button>
+      </div>
+    </div>
+    <div class="output-body" id="outputBody"></div>
+    <div class="status-row" id="statusRow">
+      <div class="status-dot done"></div>
+      <span class="status-text">Report generated — also saved as PDF in data/exports/</span>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p></p>
+    <p>Gen AI &middot; Python &middot; Vector DB &middot; LLM API</p>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // Set today's date
+  document.getElementById('date').valueAsDate = new Date();
+
+  // Report type selection
+  let selectedType = 'site_report';
+  document.querySelectorAll('.report-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      document.querySelectorAll('.report-btn').forEach(function(b) {
+        b.classList.remove('active');
+      });
+      btn.classList.add('active');
+      selectedType = btn.dataset.type;
+    });
+  });
+
+  let lastReport = '';
+  let lastPdfPath = '';
+
+  async function generate(e) {
+    if (e) e.preventDefault();
+
+    const topic = document.getElementById('topic').value.trim();
+    const location = document.getElementById('location').value.trim();
+
+    if (!topic || !location) {
+      showToast('Please fill in topic and location');
+      return;
+    }
+
+    const btn = document.getElementById('generateBtn');
+    const card = document.getElementById('outputCard');
+    const body = document.getElementById('outputBody');
+    const loadingBar = document.getElementById('loadingBar');
+    const statusRow = document.getElementById('statusRow');
+    const outputTag = document.getElementById('outputTag');
+
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+    card.classList.add('visible');
+    loadingBar.classList.add('active');
+    statusRow.classList.remove('visible');
+    body.textContent = '';
+
+    const label = selectedType.replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+    outputTag.textContent = '— ' + label;
+
+    try {
+      const res = await fetch('http://127.0.0.1:5000/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: topic, location: location, report_type: selectedType })
+      });
+
+      if (!res.ok) throw new Error('Server error');
+
+      const data = await res.json();
+      lastReport = data.report;
+      lastPdfPath = data.pdf;
+      body.innerHTML = formatReport(data.report);
+      statusRow.classList.add('visible');
+      showToast('Report generated successfully');
+
+    } catch (err) {
+      body.textContent = '❌ Could not connect to backend.\n\nMake sure you have started the Flask server:\n\n  python api.py\n\nThen refresh and try again.';
+      showToast('Backend not running — run: python api.py');
+    }
+
+    loadingBar.classList.remove('active');
+    btn.disabled = false;
+    btn.textContent = 'Generate Report';
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function formatReport(text) {
+    return text
+        // Bold headings like **Daily Report: ...**
+        .replace(/^\*\*(.+?)\*\*$/gm, '<h2>$1</h2>')
+        // ### 1. Section headings
+        .replace(/^###\s*(.+)$/gm, '<h3>$1</h3>')
+        // ## headings
+        .replace(/^##\s*(.+)$/gm, '<h3>$1</h3>')
+        // Inline bold **text**
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        // Bullet points * or -
+        .replace(/^\s*[\*\-]\s+(.+)$/gm, '<li>$1</li>')
+        // Wrap consecutive <li> in <ul>
+        .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+        // Empty lines become breaks
+        .replace(/\n{2,}/g, '<br/>')
+        // Single newlines
+        .replace(/\n/g, ' ');
+}
+
+  function copyReport() {
+    if (!lastReport) return;
+    navigator.clipboard.writeText(lastReport);
+    showToast('Copied to clipboard');
+}
+
+  function downloadReport() {
+    if (!lastPdfPath) return;
+    window.location.href = 'http://127.0.0.1:5000/download-pdf?path=' + encodeURIComponent(lastPdfPath);
+    showToast('Downloading PDF...');
+}
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function() { t.classList.remove('show'); }, 2800);
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      e.preventDefault();
+      generate(e);
+    }
+  });
+</script>
+
+</body>
+</html>
