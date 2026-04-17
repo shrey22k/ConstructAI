@@ -20,7 +20,7 @@ A specialized GenAI content generation tool tailored for construction profession
 - **Frontend:** HTML, CSS, JavaScript
 
 ## Project Structure
-
+```bash
 construction-content-generator/
 ├── app/
 │   ├── generator.py       # LLM generation logic
