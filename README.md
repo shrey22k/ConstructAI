@@ -34,7 +34,7 @@ construction-content-generator/
 ├── main.py                # CLI entry point
 ├── requirements.txt
 └── .env                   # API keys (not pushed to GitHub)
-
+```
 ## Setup Instructions
 
 ### 1. Clone the repository
