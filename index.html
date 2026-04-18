@@ -233,7 +233,13 @@
   input::placeholder, textarea::placeholder { color: var(--muted); }
   input:focus, textarea:focus { border-color: var(--accent); }
 
-  /* Generate button */
+  /* Button row */
+  .btn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
   .generate-btn {
     width: 100%;
     background: var(--accent);
@@ -251,6 +257,24 @@
   .generate-btn:hover { background: var(--accent2); transform: translateY(-1px); }
   .generate-btn:active { transform: translateY(0); }
   .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .plan-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    color: var(--accent);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.1em;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+
+  .plan-btn:hover { background: rgba(232,108,47,0.1); transform: translateY(-1px); }
+  .plan-btn:active { transform: translateY(0); }
+  .plan-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
   /* Output */
   .output-card {
@@ -298,25 +322,26 @@
 
   .action-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+  /* Output body */
   .output-body {
     padding: 28px;
     font-size: 13px;
     line-height: 1.85;
     color: #ccc9c3;
     font-family: 'DM Sans', sans-serif;
-    max-height: 520px;
+    max-height: 560px;
     overflow-y: auto;
-}
+  }
 
-.output-body h2 {
+  .output-body h2 {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 22px;
     color: var(--accent);
     letter-spacing: 0.05em;
     margin: 0 0 12px 0;
-}
+  }
 
-.output-body h3 {
+  .output-body h3 {
     font-family: 'DM Sans', sans-serif;
     font-size: 13px;
     font-weight: 600;
@@ -324,26 +349,15 @@
     border-left: 2px solid var(--accent);
     padding-left: 10px;
     margin: 20px 0 8px 0;
-}
+  }
 
-.output-body strong {
-    color: var(--text);
-    font-weight: 600;
-}
+  .output-body strong { color: var(--text); font-weight: 600; }
+  .output-body ul { padding-left: 20px; margin: 6px 0; }
+  .output-body li { margin-bottom: 4px; color: #ccc9c3; }
 
-.output-body ul {
-    padding-left: 20px;
-    margin: 6px 0;
-}
-
-.output-body li {
-    margin-bottom: 4px;
-    color: #ccc9c3;
-}
-
-.output-body::-webkit-scrollbar { width: 4px; }
-.output-body::-webkit-scrollbar-track { background: var(--surface); }
-.output-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .output-body::-webkit-scrollbar { width: 4px; }
+  .output-body::-webkit-scrollbar-track { background: var(--surface); }
+  .output-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
   /* Loading bar */
   .loading-bar { height: 2px; background: var(--border); position: relative; overflow: hidden; display: none; }
@@ -443,6 +457,7 @@
     .report-grid { grid-template-columns: repeat(2, 1fr); }
     .fields { grid-template-columns: 1fr; }
     .field.full { grid-column: 1; }
+    .btn-row { grid-template-columns: 1fr; }
     header { flex-direction: column; align-items: flex-start; gap: 16px; }
   }
 </style>
@@ -454,8 +469,8 @@
   <!-- Header -->
   <header>
     <div class="logo">
-      <!--<span class="logo-eyebrow">Powered by Groq + LLaMA</span>--> 
-      <span class="logo-name">Construction Content<span> Generator</span></span>
+      <span class="logo-eyebrow">Powered by Groq + LLaMA</span>
+      <span class="logo-name">Construct<span>AI</span></span>
     </div>
     <span class="badge">Report Generator v1.0</span>
   </header>
@@ -510,7 +525,7 @@
       </div>
       <div class="field">
         <label>Site Location</label>
-        <input type="text" id="location" placeholder="e.g. Medicaps University Indore Site A" />
+        <input type="text" id="location" placeholder="e.g. Mumbai Site A" />
       </div>
       <div class="field">
         <label>Date</label>
@@ -518,9 +533,14 @@
       </div>
     </div>
 
-    <button type="button" class="generate-btn" id="generateBtn" onclick="generate(event)">
-      Generate Report
-    </button>
+    <div class="btn-row">
+      <button type="button" class="generate-btn" id="generateBtn" onclick="generate(event)">
+        Generate Report
+      </button>
+      <button type="button" class="plan-btn" id="planBtn" onclick="planTask(event)">
+        Run Planner Agent
+      </button>
+    </div>
   </div>
 
   <!-- Output -->
@@ -530,19 +550,19 @@
       <span class="output-tag" id="outputTag">— Report Output</span>
       <div class="output-actions">
         <button type="button" class="action-btn" onclick="copyReport()">Copy</button>
-        <button type="button" class="action-btn" onclick="downloadReport()">Download PDF</button>
+        <button type="button" class="action-btn" id="downloadBtn" onclick="downloadReport()">Download PDF</button>
       </div>
     </div>
     <div class="output-body" id="outputBody"></div>
     <div class="status-row" id="statusRow">
       <div class="status-dot done"></div>
-      <span class="status-text">Report generated — also saved as PDF in data/exports/</span>
+      <span class="status-text" id="statusText">Report generated — also saved as PDF in data/exports/</span>
     </div>
   </div>
 
   <!-- Footer -->
   <footer>
-    <p></p>
+    <p>ConstructAI &mdash; Construction Content Generator</p>
     <p>Gen AI &middot; Python &middot; Vector DB &middot; LLM API</p>
   </footer>
 
@@ -551,17 +571,13 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  // Set today's date
   document.getElementById('date').valueAsDate = new Date();
 
-  // Report type selection
   let selectedType = 'site_report';
   document.querySelectorAll('.report-btn').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
-      document.querySelectorAll('.report-btn').forEach(function(b) {
-        b.classList.remove('active');
-      });
+      document.querySelectorAll('.report-btn').forEach(function(b) { b.classList.remove('active'); });
       btn.classList.add('active');
       selectedType = btn.dataset.type;
     });
@@ -569,34 +585,23 @@
 
   let lastReport = '';
   let lastPdfPath = '';
+  let currentMode = 'report';
+
+  // ── Generate Report ──────────────────────────────────────
 
   async function generate(e) {
     if (e) e.preventDefault();
 
     const topic = document.getElementById('topic').value.trim();
     const location = document.getElementById('location').value.trim();
+    if (!topic || !location) { showToast('Please fill in topic and location'); return; }
 
-    if (!topic || !location) {
-      showToast('Please fill in topic and location');
-      return;
-    }
-
+    currentMode = 'report';
     const btn = document.getElementById('generateBtn');
-    const card = document.getElementById('outputCard');
-    const body = document.getElementById('outputBody');
-    const loadingBar = document.getElementById('loadingBar');
-    const statusRow = document.getElementById('statusRow');
-    const outputTag = document.getElementById('outputTag');
-
     btn.disabled = true;
     btn.textContent = 'Generating...';
-    card.classList.add('visible');
-    loadingBar.classList.add('active');
-    statusRow.classList.remove('visible');
-    body.textContent = '';
 
-    const label = selectedType.replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
-    outputTag.textContent = '— ' + label;
+    showOutputCard('— ' + formatLabel(selectedType));
 
     try {
       const res = await fetch('http://127.0.0.1:5000/generate', {
@@ -606,56 +611,125 @@
       });
 
       if (!res.ok) throw new Error('Server error');
-
       const data = await res.json();
+
       lastReport = data.report;
       lastPdfPath = data.pdf;
-      body.innerHTML = formatReport(data.report);
-      statusRow.classList.add('visible');
+
+      document.getElementById('outputBody').innerHTML = formatReport(data.report);
+      document.getElementById('downloadBtn').style.display = 'inline-block';
+      document.getElementById('statusText').textContent = 'Report generated — saved as PDF in data/exports/';
+      document.getElementById('statusRow').classList.add('visible');
       showToast('Report generated successfully');
 
     } catch (err) {
-      body.textContent = '❌ Could not connect to backend.\n\nMake sure you have started the Flask server:\n\n  python api.py\n\nThen refresh and try again.';
-      showToast('Backend not running — run: python api.py');
+      document.getElementById('outputBody').textContent = '❌ Could not connect to backend. Run: python api.py';
+      document.getElementById('downloadBtn').style.display = 'none';
+      showToast('Backend not running');
     }
 
-    loadingBar.classList.remove('active');
+    document.getElementById('loadingBar').classList.remove('active');
     btn.disabled = false;
     btn.textContent = 'Generate Report';
-    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── Planner Agent ────────────────────────────────────────
+
+  async function planTask(e) {
+    if (e) e.preventDefault();
+
+    const topic = document.getElementById('topic').value.trim();
+    const location = document.getElementById('location').value.trim();
+    if (!topic || !location) { showToast('Please fill in topic and location'); return; }
+
+    currentMode = 'plan';
+    const btn = document.getElementById('planBtn');
+    btn.disabled = true;
+    btn.textContent = 'Agent Running...';
+
+    showOutputCard('— Planner Agent');
+    document.getElementById('downloadBtn').style.display = 'none';
+
+    document.getElementById('outputBody').innerHTML =
+      '<div style="color:var(--muted);font-family:\'DM Mono\',monospace;font-size:11px;line-height:2.2;">' +
+      '<span style="color:var(--accent);">&#9658;</span> Decomposing goal into steps...<br/>' +
+      '<span style="color:var(--accent);">&#9658;</span> Checking worker availability...<br/>' +
+      '<span style="color:var(--accent);">&#9658;</span> Validating materials & equipment...<br/>' +
+      '<span style="color:var(--accent);">&#9658;</span> Validating site conditions...<br/>' +
+      '<span style="color:var(--accent);">&#9658;</span> Generating execution schedule...<br/><br/>' +
+      '<span style="color:var(--muted);">This may take 15-30 seconds...</span>' +
+      '</div>';
+
+    try {
+      const res = await fetch('http://127.0.0.1:5000/plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: topic, location: location, report_type: selectedType })
+      });
+
+      if (!res.ok) throw new Error('Server error');
+      const data = await res.json();
+
+      lastReport = data.plan;
+      lastPdfPath = data.pdf;  // ✅ THIS was missing before
+
+      document.getElementById('outputBody').innerHTML = formatReport(data.plan);
+      document.getElementById('downloadBtn').style.display = 'inline-block';  // ✅ Show download button
+      document.getElementById('statusText').textContent = 'Planner Agent completed — PDF saved in data/exports/';
+      document.getElementById('statusRow').classList.add('visible');
+      showToast('Agent plan generated!');
+
+    } catch (err) {
+      document.getElementById('outputBody').textContent = '❌ Planner agent failed. Make sure python api.py is running.';
+      document.getElementById('downloadBtn').style.display = 'none';
+      showToast('Agent failed');
+    }
+
+    document.getElementById('loadingBar').classList.remove('active');
+    btn.disabled = false;
+    btn.textContent = 'Run Planner Agent';
+    document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── Helpers ──────────────────────────────────────────────
+
+  function showOutputCard(tag) {
+    document.getElementById('outputCard').classList.add('visible');
+    document.getElementById('loadingBar').classList.add('active');
+    document.getElementById('statusRow').classList.remove('visible');
+    document.getElementById('outputTag').textContent = tag;
+    document.getElementById('outputBody').innerHTML = '';
+    document.getElementById('downloadBtn').style.display = 'none';
+  }
+
+  function formatLabel(type) {
+    return type.replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
   }
 
   function formatReport(text) {
     return text
-        // Bold headings like **Daily Report: ...**
-        .replace(/^\*\*(.+?)\*\*$/gm, '<h2>$1</h2>')
-        // ### 1. Section headings
-        .replace(/^###\s*(.+)$/gm, '<h3>$1</h3>')
-        // ## headings
-        .replace(/^##\s*(.+)$/gm, '<h3>$1</h3>')
-        // Inline bold **text**
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        // Bullet points * or -
-        .replace(/^\s*[\*\-]\s+(.+)$/gm, '<li>$1</li>')
-        // Wrap consecutive <li> in <ul>
-        .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
-        // Empty lines become breaks
-        .replace(/\n{2,}/g, '<br/>')
-        // Single newlines
-        .replace(/\n/g, ' ');
-}
+      .replace(/^\*\*(.+?)\*\*$/gm, '<h2>$1</h2>')
+      .replace(/^###\s*(.+)$/gm, '<h3>$1</h3>')
+      .replace(/^##\s*(.+)$/gm, '<h3>$1</h3>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^\s*[\*\-]\s+(.+)$/gm, '<li>$1</li>')
+      .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+      .replace(/\n{2,}/g, '<br/>')
+      .replace(/\n/g, ' ');
+  }
 
   function copyReport() {
     if (!lastReport) return;
     navigator.clipboard.writeText(lastReport);
     showToast('Copied to clipboard');
-}
+  }
 
   function downloadReport() {
-    if (!lastPdfPath) return;
+    if (!lastPdfPath) { showToast('No PDF available yet'); return; }
     window.location.href = 'http://127.0.0.1:5000/download-pdf?path=' + encodeURIComponent(lastPdfPath);
     showToast('Downloading PDF...');
-}
+  }
 
   function showToast(msg) {
     const t = document.getElementById('toast');
@@ -665,10 +739,7 @@
   }
 
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && e.ctrlKey) {
-      e.preventDefault();
-      generate(e);
-    }
+    if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); generate(e); }
   });
 </script>
 
