@@ -5,7 +5,6 @@ from app.pdf_exporter import PDFExporter
 from app.planner_agent import PlannerAgent
 from datetime import date
 import os
-import webbrowser
 
 app = Flask(__name__, static_folder='.')
 CORS(app)
@@ -79,5 +78,9 @@ def download_pdf():
     return send_file(pdf_path, as_attachment=True)
 
 if __name__ == "__main__":
-    webbrowser.open("http://127.0.0.1:5000")
-    app.run(debug=False)
+    # Auto-opens browser locally, skipped inside Docker
+    if os.environ.get("DOCKER_ENV") != "true":
+        import webbrowser
+        webbrowser.open("http://127.0.0.1:5000")
+    # host="0.0.0.0" makes it accessible from Docker/EC2 too
+    app.run(host="0.0.0.0", port=5000, debug=False)
