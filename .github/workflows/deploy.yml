@@ -31,14 +31,33 @@ jobs:
         python -m py_compile app/planner_agent.py
         python -m py_compile app/pdf_exporter.py
         python -m py_compile app/vector_store.py
-        echo " All files passed syntax check"
+        echo "All files passed syntax check"
 
     - name: Build Docker image
       run: |
         docker build -t constructai:latest .
-        echo " Docker image built successfully"
+        echo "Docker image built successfully"
 
     - name: Verify Docker image
       run: |
         docker images | grep constructai
-        echo " Image verified"
+        echo "Image verified"
+
+  deploy-to-ec2:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd ConstructAI
+          git pull origin main
+          docker compose down
+          docker compose up --build -d
+          echo "Deployed successfully"
