@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: constructai-deployment
+  labels:
+    app: constructai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: constructai
+  template:
+    metadata:
+      labels:
+        app: constructai
+    spec:
+      containers:
+      - name: constructai
+        image: constructai:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 5000
+        env:
+        - name: GROQ_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: constructai-secret
+              key: GROQ_API_KEY
+        envFrom:
+        - configMapRef:
+            name: constructai-config
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: data-exports
+          mountPath: /app/data/exports
+        - name: data-chromadb
+          mountPath: /app/data/chromadb
+      volumes:
+      - name: data-exports
+        emptyDir: {}
+      - name: data-chromadb
+        emptyDir: {}

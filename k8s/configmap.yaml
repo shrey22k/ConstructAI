@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: constructai-config
+  namespace: default
+data:
+  PYTHONUNBUFFERED: "1"
+  FLASK_ENV: "production"
