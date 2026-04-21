@@ -81,23 +81,55 @@ Status: APPROVED for work"""
 
 @tool
 def generate_task_schedule(tasks_json: str) -> str:
-    """Generate execution schedule. Input: JSON string list of tasks with task, duration_hours, depends_on fields."""
+    """
+    Generate a realistic day-wise execution schedule.
+    Input: JSON string list of tasks.
+    Each task must have: task (string), duration_hours (1-4 integer).
+    Example: [{"task": "Site Inspection", "duration_hours": 2}, ...]
+    """
     try:
         tasks = json.loads(tasks_json)
         schedule = []
         current_hour = 8
+        current_day = 1
+        WORK_START = 8
+        WORK_END = 17
+
         for i, task in enumerate(tasks):
-            duration = task.get("duration_hours", 1)
+            # Clamp duration between 1 and 4 hours
+            duration = max(1, min(4, int(task.get("duration_hours", 1))))
+
+            # If task won't fit in today's work hours, move to next day
+            if current_hour + duration > WORK_END:
+                current_day += 1
+                current_hour = WORK_START
+
+            end_hour = current_hour + duration
+
+            # Determine dependency
+            if i == 0:
+                depends = "None — Start of sequence"
+            else:
+                depends = tasks[i - 1]["task"]
+
             schedule.append(
-                f"Step {i+1}: {task['task']} | "
-                f"Start: {current_hour:02d}:00 | "
-                f"End: {current_hour + duration:02d}:00 | "
-                f"Depends on: {', '.join(task.get('depends_on', [])) or 'None'}"
+                f"Step {i + 1}: {task['task']}\n"
+                f"   Day:        Day {current_day}\n"
+                f"   Start:      {current_hour:02d}:00\n"
+                f"   End:        {end_hour:02d}:00\n"
+                f"   Duration:   {duration} hour(s)\n"
+                f"   Depends on: {depends}"
             )
-            current_hour += duration
-        return "\n".join(schedule)
+
+            current_hour = end_hour
+
+        total_days = current_day
+        summary = f"Total Duration: {total_days} work day(s) | Work hours: {WORK_START}:00 - {WORK_END}:00"
+        return summary + "\n\n" + "\n\n".join(schedule)
+
     except Exception as e:
         return f"Schedule generation failed: {str(e)}"
+
 
 # ── Planner Agent ────────────────────────────────────────────
 
@@ -121,14 +153,23 @@ class PlannerAgent:
             ("system", """You are a sophisticated Construction Planner Agent built with LangChain and Groq LLM API.
 Your job is to orchestrate complex construction tasks through multi-step reasoning.
 
-When given a construction goal you MUST:
-1. DECOMPOSE the goal into 4-6 actionable steps
-2. USE tools to check workers, materials, and equipment availability
-3. VALIDATE site conditions using the validate_site_conditions tool
-4. GENERATE a detailed execution schedule using generate_task_schedule tool
-5. PRODUCE a final structured construction plan with all findings
+When given a construction goal you MUST follow these steps in order:
+1. DECOMPOSE the goal into 4-6 clear actionable construction steps
+2. CHECK worker availability for relevant roles using check_workers_availability tool
+3. CHECK materials availability for relevant materials using check_materials_availability tool
+4. CHECK equipment availability using check_equipment_availability tool
+5. VALIDATE site conditions using validate_site_conditions tool
+6. GENERATE execution schedule using generate_task_schedule tool — pass a JSON array where each item has:
+   - "task": step name (string)
+   - "duration_hours": realistic duration between 1 and 4 (integer only)
+   Do NOT include "depends_on" field — dependencies are handled automatically.
+7. PRODUCE a final structured construction plan summarizing all findings
 
-Always use tools before writing your final plan. Be professional and thorough."""),
+STRICT RULES:
+- duration_hours must be an integer between 1 and 4 only — never more than 4
+- Never pass depends_on in the tasks JSON
+- Always call all tools before writing final output
+- Be professional and use construction industry terminology"""),
             ("human", "{input}"),
             ("placeholder", "{agent_scratchpad}"),
         ])
@@ -143,7 +184,7 @@ Always use tools before writing your final plan. Be professional and thorough.""
             agent=self.agent,
             tools=self.tools,
             verbose=True,
-            max_iterations=10,
+            max_iterations=12,
             handle_parsing_errors=True
         )
 
@@ -154,12 +195,8 @@ Topic: {topic}
 Site location: {location}
 Date: {date.today()}
 
-Please:
-1. Decompose this into actionable steps
-2. Check availability of relevant workers, materials, and equipment using tools
-3. Validate site conditions at {location} using tools
-4. Generate an execution schedule using tools
-5. Provide a final comprehensive construction plan
+Follow all steps: decompose the goal, check workers/materials/equipment availability,
+validate site conditions, generate execution schedule, then write the final plan.
 """
         result = self.executor.invoke({"input": query})
         return {
