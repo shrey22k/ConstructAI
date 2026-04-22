@@ -1,9 +1,12 @@
 import chromadb
+import os
 from chromadb.utils import embedding_functions
 
 class VectorStore:
     def __init__(self):
-        self.client = chromadb.PersistentClient(path="./data/chromadb")
+        db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'chromadb')
+        os.makedirs(db_path, exist_ok=True)
+        self.client = chromadb.PersistentClient(path=db_path)
         self.ef = embedding_functions.DefaultEmbeddingFunction()
         self.collection = self.client.get_or_create_collection(
             name="construction_reports",
