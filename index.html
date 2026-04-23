@@ -18,6 +18,7 @@
     --text: #f0ede8;
     --muted: #6b6560;
     --success: #4caf7d;
+    --error: #e84040;
   }
 
   html { scroll-behavior: smooth; }
@@ -74,14 +75,6 @@
   }
 
   .logo { display: flex; flex-direction: column; gap: 2px; }
-
-  .logo-eyebrow {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    color: var(--accent);
-    text-transform: uppercase;
-  }
 
   .logo-name {
     font-family: 'Bebas Neue', sans-serif;
@@ -227,6 +220,27 @@
 
   input::placeholder, textarea::placeholder { color: var(--muted); }
   input:focus, textarea:focus { border-color: var(--accent); }
+  input.error { border-color: var(--error) !important; }
+
+  /* Date hint text */
+  .date-hint {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    margin-top: 4px;
+    display: block;
+  }
+
+  .date-hint.error-hint {
+    color: var(--error);
+    animation: shake 0.3s ease;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
 
   .btn-row {
     display: grid;
@@ -439,6 +453,7 @@
   }
 
   .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.error { border-color: var(--error); color: var(--error); }
 
   @media (max-width: 600px) {
     .report-grid { grid-template-columns: repeat(2, 1fr); }
@@ -513,6 +528,7 @@
       <div class="field">
         <label>Date</label>
         <input type="date" id="date" />
+        <span class="date-hint" id="dateHint">Planner Agent requires today or a future date</span>
       </div>
     </div>
 
@@ -566,32 +582,52 @@
 
   let lastReport = '';
   let lastPdfPath = '';
-  let currentMode = 'report';
 
+  // ── Date validation helper ───────────────────────────────
+  function isPastDate() {
+    var dateInput = document.getElementById('date').value;
+    if (!dateInput) return false;
+    var selected = new Date(dateInput);
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return selected < today;
+  }
+
+  function showDateError() {
+    var dateEl = document.getElementById('date');
+    var hintEl = document.getElementById('dateHint');
+    dateEl.classList.add('error');
+    hintEl.textContent = '⚠️ Past date not allowed — Planner Agent requires today or future date';
+    hintEl.classList.add('error-hint');
+    setTimeout(function() {
+      dateEl.classList.remove('error');
+      hintEl.textContent = 'Planner Agent requires today or a future date';
+      hintEl.classList.remove('error-hint');
+    }, 3500);
+  }
+
+  // ── Generate Report ──────────────────────────────────────
   async function generate(e) {
     if (e) e.preventDefault();
 
-    const topic = document.getElementById('topic').value.trim();
-    const location = document.getElementById('location').value.trim();
-    if (!topic || !location) { showToast('Please fill in topic and location'); return; }
+    var topic = document.getElementById('topic').value.trim();
+    var location = document.getElementById('location').value.trim();
+    if (!topic || !location) { showToast('Please fill in topic and location', false); return; }
 
-    currentMode = 'report';
-    const btn = document.getElementById('generateBtn');
+    var btn = document.getElementById('generateBtn');
     btn.disabled = true;
     btn.textContent = 'Generating...';
-
     showOutputCard('— ' + formatLabel(selectedType));
 
     try {
-      // ✅ FIXED: was http://127.0.0.1:5000/generate
-      const res = await fetch('/generate', {
+      var res = await fetch('/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic: topic, location: location, report_type: selectedType })
       });
 
       if (!res.ok) throw new Error('Server error');
-      const data = await res.json();
+      var data = await res.json();
 
       lastReport = data.report;
       lastPdfPath = data.pdf;
@@ -600,12 +636,12 @@
       document.getElementById('downloadBtn').style.display = 'inline-block';
       document.getElementById('statusText').textContent = 'Report generated — saved as PDF in data/exports/';
       document.getElementById('statusRow').classList.add('visible');
-      showToast('Report generated successfully');
+      showToast('Report generated successfully', false);
 
     } catch (err) {
       document.getElementById('outputBody').textContent = '❌ Could not connect to backend. Run: python api.py';
       document.getElementById('downloadBtn').style.display = 'none';
-      showToast('Backend not running');
+      showToast('Backend not running', true);
     }
 
     document.getElementById('loadingBar').classList.remove('active');
@@ -614,18 +650,24 @@
     document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  // ── Planner Agent ────────────────────────────────────────
   async function planTask(e) {
     if (e) e.preventDefault();
 
-    const topic = document.getElementById('topic').value.trim();
-    const location = document.getElementById('location').value.trim();
-    if (!topic || !location) { showToast('Please fill in topic and location'); return; }
+    var topic = document.getElementById('topic').value.trim();
+    var location = document.getElementById('location').value.trim();
+    if (!topic || !location) { showToast('Please fill in topic and location', false); return; }
 
-    currentMode = 'plan';
-    const btn = document.getElementById('planBtn');
+    // ✅ Past date validation — block if date is in the past
+    if (isPastDate()) {
+      showDateError();
+      showToast('Planner Agent needs today or future date!', true);
+      return;
+    }
+
+    var btn = document.getElementById('planBtn');
     btn.disabled = true;
     btn.textContent = 'Agent Running...';
-
     showOutputCard('— Planner Agent');
     document.getElementById('downloadBtn').style.display = 'none';
 
@@ -640,15 +682,14 @@
       '</div>';
 
     try {
-      // ✅ FIXED: was http://127.0.0.1:5000/plan
-      const res = await fetch('/plan', {
+      var res = await fetch('/plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic: topic, location: location, report_type: selectedType })
       });
 
       if (!res.ok) throw new Error('Server error');
-      const data = await res.json();
+      var data = await res.json();
 
       lastReport = data.plan;
       lastPdfPath = data.pdf;
@@ -657,12 +698,12 @@
       document.getElementById('downloadBtn').style.display = 'inline-block';
       document.getElementById('statusText').textContent = 'Planner Agent completed — PDF saved in data/exports/';
       document.getElementById('statusRow').classList.add('visible');
-      showToast('Agent plan generated!');
+      showToast('Agent plan generated!', false);
 
     } catch (err) {
       document.getElementById('outputBody').textContent = '❌ Planner agent failed. Make sure python api.py is running.';
       document.getElementById('downloadBtn').style.display = 'none';
-      showToast('Agent failed');
+      showToast('Agent failed', true);
     }
 
     document.getElementById('loadingBar').classList.remove('active');
@@ -671,6 +712,7 @@
     document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  // ── Helpers ──────────────────────────────────────────────
   function showOutputCard(tag) {
     document.getElementById('outputCard').classList.add('visible');
     document.getElementById('loadingBar').classList.add('active');
@@ -699,21 +741,25 @@
   function copyReport() {
     if (!lastReport) return;
     navigator.clipboard.writeText(lastReport);
-    showToast('Copied to clipboard');
+    showToast('Copied to clipboard', false);
   }
 
   function downloadReport() {
-    if (!lastPdfPath) { showToast('No PDF available yet'); return; }
-    // ✅ FIXED: was http://127.0.0.1:5000/download-pdf
+    if (!lastPdfPath) { showToast('No PDF available yet', true); return; }
     window.location.href = '/download-pdf?path=' + encodeURIComponent(lastPdfPath);
-    showToast('Downloading PDF...');
+    showToast('Downloading PDF...', false);
   }
 
-  function showToast(msg) {
-    const t = document.getElementById('toast');
+  function showToast(msg, isError) {
+    var t = document.getElementById('toast');
     t.textContent = msg;
+    t.classList.remove('error');
+    if (isError) t.classList.add('error');
     t.classList.add('show');
-    setTimeout(function() { t.classList.remove('show'); }, 2800);
+    setTimeout(function() {
+      t.classList.remove('show');
+      t.classList.remove('error');
+    }, 3000);
   }
 
   document.addEventListener('keydown', function(e) {
