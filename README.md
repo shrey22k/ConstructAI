@@ -1,35 +1,51 @@
 # ConstructAI — Construction Content Generator
 
-A specialized **Generative AI** application built for construction professionals. It transforms basic construction topics into professional, industry-standard reports using advanced Prompt Engineering, a Vector Database for context retrieval, and a multi-step **Planner Agent** powered by LangChain and Groq API.
+> A specialized GenAI-powered platform that transforms basic construction topics into professional, industry-standard documentation using advanced Prompt Engineering, a Planner Agent, and Vector DB memory.
 
 ---
 
-## Problem Statement
+## Live Deployment
 
-Construction professionals spend significant time manually drafting complex documentation such as Site Reports, Safety Reports, and Progress Reports. **ConstructAI** reduces this effort drastically by generating high-quality, consistent, and industry-standard reports in seconds.
-
----
-
-## Project Info
-
-| Field | Details |
+| Environment | URL | Status |
 |---|---|
-| **Subject** | Gen AI |
-| **Tools** | Python, Vector DB, LLM API |
-| **LLM** | Groq API (LLaMA 3.3 70B) |
-| **Vector DB** | ChromaDB |
-| **Agent Framework** | LangChain |
+| Docker Compose | ✅ Healthy |
+| Kubernetes | ✅ Running |
+
+---
+
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Getting Started (Local)](#getting-started-local)
+- [Docker Setup](#docker-setup)
+- [Kubernetes Setup](#kubernetes-setup)
+- [CI/CD Pipeline](#cicd-pipeline)
+- [AWS EC2 Deployment](#aws-ec2-deployment)
+- [API Endpoints](#api-endpoints)
+- [Report Types](#report-types)
+- [Planner Agent](#planner-agent)
+
+---
+
+## Project Overview
+
+ConstructAI is a full-stack Generative AI application built for construction professionals. It uses **Prompt Engineering**, a **LangChain Planner Agent**, and **ChromaDB vector memory** to generate consistent, professional construction reports. The application is containerized with Docker, orchestrated with Kubernetes, and deployed on AWS EC2 with automated CI/CD via GitHub Actions.
 
 ---
 
 ## Features
 
-- **6 Report Types** — Site, Safety, Progress, Inspection, Daily, and Material Reports
-- **Prompt Engineering** — Sophisticated templates ensure professional tone, formatting, and industry-standard terminology
-- **Vector Database** — ChromaDB stores and retrieves past reports for improved consistency across generations
-- **Planner Agent** — LangChain-powered multi-step reasoning agent that decomposes goals, validates resources via mock tools, and generates execution schedules
-- **PDF Export** — Every generated report is automatically saved as a professionally formatted PDF
-- **Web UI** — Clean, minimal dark-themed frontend served via Flask
+- **6 Report Types** — Site, Safety, Progress, Inspection, Daily, Material
+- **Planner Agent** — LangChain-powered multi-step reasoning agent with 5 mock tools
+- **Vector Memory** — ChromaDB stores past reports for consistency across generations
+- **PDF Export** — Professional PDF generation via ReportLab
+- **Dark UI** — Responsive HTML/CSS/JS frontend served via Flask
+- **Containerized** — Multi-stage Docker build with security best practices
+- **Orchestrated** — Kubernetes deployment with ConfigMap and Secrets
+- **CI/CD** — GitHub Actions auto-deploys to EC2 on every push
 
 ---
 
@@ -37,12 +53,17 @@ Construction professionals spend significant time manually drafting complex docu
 
 | Layer | Technology |
 |---|---|
-| Backend | Python, Flask |
-| LLM API | Groq API (LLaMA 3.3 70B Versatile) |
-| Agent Framework | LangChain (`langchain`, `langchain-groq`) |
-| Vector Database | ChromaDB |
+| LLM API | Groq API (LLaMA 3.3-70B) |
+| Agent Framework | LangChain (`AgentExecutor`, `create_tool_calling_agent`) |
+| Vector DB | ChromaDB (PersistentClient) |
+| Backend | Python, Flask, Flask-CORS |
 | PDF Generation | ReportLab |
 | Frontend | HTML, CSS, JavaScript |
+| Containerization | Docker (multi-stage Dockerfile) |
+| Orchestration | Kubernetes (minikube), kubectl |
+| CI/CD | GitHub Actions |
+| Cloud | AWS EC2 (t3.small, Singapore region) |
+| Version Control | Git, GitHub |
 
 ---
 
@@ -53,138 +74,238 @@ ConstructAI/
 │
 ├── app/
 │   ├── __init__.py
-│   ├── generator.py          # Core LLM report generation
-│   ├── planner_agent.py      # LangChain Planner Agent with tools
-│   ├── prompts.py            # Prompt Engineering templates
-│   ├── pdf_exporter.py       # ReportLab PDF export
-│   └── vector_store.py       # ChromaDB vector storage
+│   ├── generator.py          # Core LLM generation logic (Groq API)
+│   ├── vector_store.py       # ChromaDB vector memory
+│   ├── prompts.py            # Prompt engineering templates (6 report types)
+│   ├── pdf_exporter.py       # ReportLab PDF generation
+│   └── planner_agent.py      # LangChain Planner Agent with 5 tools
 │
 ├── data/
-│   └── exports/              # Generated PDF reports saved here
+│   ├── exports/              # Generated PDF reports saved here
+│   └── chromadb/             # Persistent ChromaDB vector storage
 │
-├── venv/                     # Python virtual environment
+├── k8s/
+│   ├── deployment.yaml       # Kubernetes Deployment config
+│   ├── service.yaml          # Kubernetes NodePort Service
+│   └── configmap.yaml        # Environment configuration
+│
+├── .github/
+│   └── workflows/
+│       └── deploy.yml        # GitHub Actions CI/CD pipeline
+│
 ├── api.py                    # Flask API server (entry point)
 ├── index.html                # Frontend UI
-├── main.py                   # CLI entry point
-├── .env                      # API keys (not committed)
-├── requirements.txt
+├── Dockerfile                # Multi-stage Docker build
+├── docker-compose.yml        # Docker Compose orchestration
+├── .dockerignore             # Docker build exclusions
+├── requirements.txt          # Python dependencies
+├── .env                      # Environment variables (not committed)
 └── README.md
 ```
 
 ---
 
-## Installation & Setup
+## Getting Started (Local)
 
 ### Prerequisites
 
-- Python 3.10 or above
-- A free [Groq API Key](https://console.groq.com)
+- Python 3.11+
+- Git
+- Groq API key (free at [console.groq.com](https://console.groq.com))
 
-### Step 1 — Clone or open the project in VS Code
+### Setup
 
 ```bash
+# Clone the repository
+git clone https://github.com/YOUR_USERNAME/ConstructAI.git
 cd ConstructAI
-```
 
-### Step 2 — Create and activate virtual environment
-
-```bash
+# Create virtual environment
 python -m venv venv
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # Mac/Linux
 
-# Windows
-venv\Scripts\activate
-
-# Mac/Linux
-source venv/bin/activate
-```
-
-### Step 3 — Install dependencies
-
-```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-### Step 4 — Set up environment variables
+# Create .env file
+echo GROQ_API_KEY=your_key_here > .env
 
-Create a `.env` file in the root folder:
-
-```env
-GROQ_API_KEY=your_groq_api_key_here
-```
-
-Get your free API key from [console.groq.com](https://console.groq.com).
-
-### Step 5 — Run the application
-
-```bash
+# Run the app
 python api.py
 ```
 
-The browser will open automatically at `http://127.0.0.1:5000`.
-
-> **Important:** Always use `http://127.0.0.1:5000` to open the app. Do NOT use VS Code's Live Server (port 5500) as it cannot connect to the Python backend.
+Open `http://127.0.0.1:5000` in your browser.
 
 ---
 
-## How to Use
+## Docker Setup
 
-### Generate a Report
+### Build and Run
 
-1. Select a report type (Site, Safety, Progress, etc.)
-2. Enter a construction topic (e.g., `concrete pouring on Level 3`)
-3. Enter the site location (e.g., `Mumbai Site A`)
-4. Click **Generate Report**
-5. The report appears on screen and is saved as a PDF in `data/exports/`
-6. Click **Download PDF** to download it
+```bash
+# Build and start container
+docker compose up --build -d
 
-### Run the Planner Agent
+# Check status
+docker compose ps
 
-1. Fill in the same fields as above
-2. Click **Run Planner Agent**
-3. The LangChain agent will autonomously:
-   - Decompose the goal into actionable steps
-   - Check worker, material, and equipment availability via tools
-   - Validate site conditions
-   - Generate a detailed execution schedule with dependencies
-4. The final plan appears on screen and is also exported as a PDF
+# View logs
+docker compose logs -f
+
+# Stop container
+docker compose down
+```
+
+### Useful Docker Commands
+
+```bash
+# List images
+docker images
+
+# Container stats
+docker stats
+
+# Execute shell inside container
+docker exec -it constructai-app bash
+
+# Health check
+docker exec constructai-app curl http://localhost:5000
+```
+
+### Dockerfile — Multi-stage Build
+
+The Dockerfile uses a **2-stage build** for optimized image size and security:
+
+- **Stage 1 (Builder)** — Installs all Python dependencies
+- **Stage 2 (Production)** — Copies only built packages, runs as non-root `appuser`, includes `curl` for healthcheck
+
+This reduces attack surface and keeps the final image lean.
 
 ---
 
-## Planner Agent — How It Works
+## Kubernetes Setup
 
-The Planner Agent is built using **LangChain** with **Groq (LLaMA 3.3 70B)** as the LLM.
+### Prerequisites
 
-### Agent Tools (Mock Interfaces)
+```bash
+# Install minikube
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
 
-| Tool | Description |
+# Install kubectl
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+# Start cluster
+minikube start --driver=docker
+```
+
+### Deploy
+
+```bash
+# Build image directly inside minikube (avoids OOM on t3.small)
+eval $(minikube docker-env)
+docker build -t constructai:latest .
+
+# Create secret
+kubectl create secret generic constructai-secret \
+  --from-literal=GROQ_API_KEY=your_groq_api_key_here
+
+# Apply configs
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+```
+
+### Verify
+
+```bash
+kubectl get pods           # Pod status
+kubectl get deployments    # Deployment status
+kubectl get services       # Service + NodePort
+kubectl logs deployment/constructai-deployment
+kubectl describe deployment constructai-deployment
+```
+
+### Access via Port Forward
+
+```bash
+# Run in background
+nohup kubectl port-forward service/constructai-service 5001:5000 --address 0.0.0.0 &
+
+# Access at
+# http://YOUR_EC2_IP:5001
+```
+
+---
+
+## CI/CD Pipeline
+
+GitHub Actions automatically runs on every push to `main`.
+
+### Pipeline Stages
+
+| Stage | What it does |
 |---|---|
-| `check_workers_availability` | Returns available workers for a given role |
-| `check_materials_availability` | Returns available quantities of construction materials |
-| `check_equipment_availability` | Returns operational status of equipment |
-| `validate_site_conditions` | Validates weather, permits, and access conditions |
-| `generate_task_schedule` | Produces a step-by-step execution schedule with dependencies |
+| Checkout | Pulls latest code |
+| Setup Python | Installs Python 3.11 |
+| Install Dependencies | Runs `pip install -r requirements.txt` |
+| Syntax Check | Validates all Python files compile |
+| Build Docker Image | Builds `constructai:latest` |
+| Verify Image | Confirms image exists |
+| Deploy to EC2 | SSHs into EC2, pulls code, rebuilds container |
 
-### Multi-Step Reasoning Loop
+### Secrets Required in GitHub
+
+Go to `Settings → Secrets → Actions` and add:
+
+| Secret | Value |
+|---|---|
+| `EC2_HOST` | Your EC2 public IP |
+| `EC2_SSH_KEY` | Contents of your `.pem` file |
+
+### View Pipeline
 
 ```
-User Goal
-    ↓
-Decompose into steps
-    ↓
-Tool: check_workers_availability
-    ↓
-Tool: check_materials_availability
-    ↓
-Tool: check_equipment_availability
-    ↓
-Tool: validate_site_conditions
-    ↓
-Tool: generate_task_schedule
-    ↓
-Final Construction Plan (PDF)
+https://github.com/YOUR_USERNAME/ConstructAI/actions
 ```
 
-The agent autonomously decides which tools to call and in what order, handling dependencies between steps dynamically.
+---
+
+## AWS EC2 Deployment
+
+### Instance Details
+
+| Setting | Value |
+|---|---|
+| Instance Type | t3.small |
+| Region | Asia Pacific (Singapore) ap-southeast-1 |
+| OS | Ubuntu 22.04 LTS |
+| Storage | 8 GB |
+
+### Security Group Inbound Rules
+
+| Port | Purpose |
+|---|---|
+| 22 | SSH access |
+| 5000 | Docker Compose app |
+| 5001 | Kubernetes port-forward |
+| 30001 | Kubernetes NodePort |
+
+### Connect to EC2
+
+```bash
+ssh -i constructai-key.pem ubuntu@YOUR_EC2_IP
+```
+
+### Cost Management
+
+```
+t3.small = ~$0.025/hour
+Always STOP (not terminate) instance when not in use
+Estimated cost for demo usage = ~$0.20/day
+```
 
 ---
 
@@ -192,12 +313,12 @@ The agent autonomously decides which tools to call and in what order, handling d
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/` | Serves the frontend UI |
-| `POST` | `/generate` | Generates a construction report |
-| `POST` | `/plan` | Runs the Planner Agent |
-| `GET` | `/download-pdf?path=...` | Downloads a generated PDF |
+| `GET` | `/` | Serves frontend UI |
+| `POST` | `/generate` | Generate construction report |
+| `POST` | `/plan` | Run Planner Agent |
+| `GET` | `/download-pdf` | Download generated PDF |
 
-### POST `/generate` — Request Body
+### POST `/generate`
 
 ```json
 {
@@ -207,12 +328,13 @@ The agent autonomously decides which tools to call and in what order, handling d
 }
 ```
 
-### POST `/generate` — Response
+### POST `/plan`
 
 ```json
 {
-  "report": "Full report text...",
-  "pdf": "data/exports/site_report_concrete_pouring_2026-04-18.pdf"
+  "topic": "fire extinguisher installation",
+  "location": "Delhi Mall",
+  "report_type": "safety_report"
 }
 ```
 
@@ -220,60 +342,81 @@ The agent autonomously decides which tools to call and in what order, handling d
 
 ## Report Types
 
-| Type | Key | Description |
+| Key | Report | Description |
 |---|---|---|
-| Site Report | `site_report` | General site overview, observations, and next steps |
-| Safety Report | `safety_report` | Hazards, PPE compliance, incidents, and corrective actions |
-| Progress Report | `progress_report` | Work completed vs planned, milestones, and delays |
-| Inspection Report | `inspection_report` | Quality checks, defects, and approvals |
-| Daily Report | `daily_report` | Daily activities, weather, workers, and equipment |
-| Material Report | `material_report` | Materials received, used, wasted, and stock levels |
+| `site_report` | Site Report | General site overview and observations |
+| `safety_report` | Safety Report | Hazards, PPE compliance, incidents |
+| `progress_report` | Progress Report | Work done vs planned, milestones, delays |
+| `inspection_report` | Inspection Report | Quality checks, defects, approvals |
+| `daily_report` | Daily Report | Day's activities, workers, weather |
+| `material_report` | Material Report | Materials received, used, wasted |
 
 ---
 
-## Vector Database (ChromaDB)
+## Planner Agent
 
-Every report generated is stored in **ChromaDB**. When a new report is generated, the system:
+The Planner Agent is built with **LangChain** + **Groq API** and uses a multi-step reasoning loop to autonomously orchestrate construction tasks.
 
-1. Searches for similar past reports
-2. Uses them as reference context in the prompt
-3. Ensures consistency in tone and terminology across all reports
+### How it works
 
-This means the application gets better and more consistent the more reports you generate.
+1. **Decomposes** the high-level goal into 4–6 actionable steps
+2. **Checks** worker availability via mock tool
+3. **Validates** materials and equipment via mock tools
+4. **Validates** site conditions via mock tool
+5. **Generates** an execution schedule with dependencies via mock tool
+6. **Produces** a final structured construction plan
 
----
+### Tools Available to Agent
 
-## Requirements
+| Tool | Purpose |
+|---|---|
+| `check_workers_availability` | Check available workers by role |
+| `check_materials_availability` | Check material stock levels |
+| `check_equipment_availability` | Check equipment operational status |
+| `validate_site_conditions` | Validate site is approved for work |
+| `generate_task_schedule` | Generate time-based execution schedule |
 
+### LangChain Components Used
+
+```python
+from langchain_groq import ChatGroq
+from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain_core.tools import tool
+from langchain_core.prompts import ChatPromptTemplate
 ```
-flask
-flask-cors
-groq
-chromadb==1.1.0
-python-dotenv
-reportlab
-langchain==0.2.16
-langchain-core==0.2.38
-langchain-groq==0.1.9
-langchain-community==0.2.16
-```
-
-To regenerate:
-```bash
-pip freeze > requirements.txt
-```
 
 ---
 
-## Known Notes
+## Environment Variables
 
-- Always run the app via `python api.py`, not Live Server
-- ChromaDB data is stored in `.cache/chroma` and persists between sessions
-- PDF files are saved in `data/exports/` and are never auto-deleted
-- The Planner Agent may take 15–30 seconds due to multi-step reasoning
+Create a `.env` file in the project root:
+
+```env
+GROQ_API_KEY=your_groq_api_key_here
+```
+
+> Never commit `.env` to Git. It is listed in `.gitignore`.
 
 ---
 
-## License
+## Known Issues & Fixes Applied
 
-This project was built for academic/educational purposes as part of a Gen AI course project.
+| Issue | Fix |
+|---|---|
+| `pywin32` in requirements.txt (Windows-only) | Replaced with minimal Linux-compatible requirements |
+| ChromaDB permission error on mounted volume | `chmod -R 777 data/` on EC2 host |
+| `/home/appuser/.cache` permission error | Added `mkdir` + `chown` in Dockerfile |
+| Hardcoded `127.0.0.1:5000` in frontend | Replaced with relative URLs (`/generate`, `/plan`) |
+| `minikube image load` OOM on t3.small | Used `eval $(minikube docker-env)` + build directly |
+| Port 5000 conflict between Docker and K8s | K8s port-forwarded to 5001 instead |
+| Container unhealthy (`curl` missing) | Added `curl` install in production stage of Dockerfile |
+
+---
+
+## Acknowledgements
+
+- [Groq](https://groq.com) — Free LLM API (LLaMA 3.3-70B)
+- [LangChain](https://langchain.com) — Agent framework
+- [ChromaDB](https://trychroma.com) — Vector database
+- [ReportLab](https://reportlab.com) — PDF generation
+- [Medicaps University](https://medicaps.ac.in) — GenAI Skill-Based Course
