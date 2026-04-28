@@ -7,9 +7,9 @@
 ## Live Deployment
 
 | Environment | URL | Status |
-|---|---|
-| Docker Compose | ✅ Healthy |
-| Kubernetes | ✅ Running |
+|---|---|---|
+| Docker Compose | [http://47.128.153.137:5000](http://47.128.153.137:5000) | ✅ Healthy |
+| Kubernetes | [http://47.128.153.137:5001](http://47.128.153.137:5001) | ✅ Running |
 
 ---
 
