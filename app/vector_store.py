@@ -26,3 +26,4 @@ class VectorStore:
             n_results=n_results
         )
         return results["documents"][0] if results["documents"] else []
+#ChromaDB vector Memory Integrated
