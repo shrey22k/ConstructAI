@@ -1,3 +1,5 @@
+# This module handles detail prompts for report generation.
+
 SITE_REPORT_PROMPT = """
 You are a senior construction site manager writing a formal Site Report.
 Use industry-standard terminology, professional tone, and structured formatting.
